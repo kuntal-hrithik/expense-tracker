@@ -6,7 +6,9 @@ import 'package:expense_tracker/models/expense.dart';
 final formatter = DateFormat.yMd();
 
 class NewExpense extends StatefulWidget {
-  const NewExpense({super.key});
+  const NewExpense({super.key, required this.onAddExpense});
+
+  final void Function(Expense expense) onAddExpense;
   @override
   State<NewExpense> createState() {
     return _NewExpenseState();
@@ -37,6 +39,35 @@ class _NewExpenseState extends State<NewExpense> {
     setState(() {
       _datePicker = pickedDate;
     });
+  }
+
+  void _submitExpenseData() {
+    final enteredAmount = double.tryParse(_amountController.text);
+    final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
+    if (_titleController.text.trim().isEmpty ||
+        amountIsInvalid ||
+        _datePicker == null) {
+      showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+                title: const Text("Invalid Input"),
+                content: const Text(
+                    "please make sure to enter a valid date,title, amount"),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text("Okay"))
+                ],
+              ));
+      widget.onAddExpense(Expense(
+          title: _titleController.text,
+          amount: enteredAmount,
+          date: _datePicker!,
+          category: _selectedCategory));
+      return;
+    }
   }
 
   @override
@@ -85,21 +116,21 @@ class _NewExpenseState extends State<NewExpense> {
           Row(
             children: [
               DropdownButton(
-                value: _selectedCategory!,
+                value: _selectedCategory,
                 items: Category.values
                     .map(
                       (category) => DropdownMenuItem(
                         value: category,
                         child: Text(category.name.toUpperCase()),
                       ),
-                    ).toList(),
+                    )
+                    .toList(),
                 onChanged: (value) {
-                  print(value);
                   if (value == null) {
                     return;
                   }
                   setState(() {
-                   _selectedCategory = value;
+                    _selectedCategory = value;
                   });
                 },
               ),
@@ -109,7 +140,8 @@ class _NewExpenseState extends State<NewExpense> {
                   },
                   child: const Text("Cancel")),
               ElevatedButton(
-                  onPressed: () {}, child: const Text('Save Expense'))
+                  onPressed: _submitExpenseData,
+                  child: const Text('Save Expense'))
             ],
           )
         ],
