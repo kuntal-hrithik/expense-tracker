@@ -1,4 +1,5 @@
 import 'package:expense_tracker/models/expense.dart';
+import 'package:expense_tracker/widget/chart/chart.dart';
 import 'package:expense_tracker/widget/expensesList/expense_list.dart';
 import 'package:expense_tracker/widget/new_expense.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,7 @@ import 'package:flutter/material.dart';
 class Expenses extends StatefulWidget {
   const Expenses({super.key});
   @override
-  State<StatefulWidget> createState() {
+  State<Expenses> createState() {
     return _ExpensesState();
   }
 }
@@ -32,9 +33,23 @@ class _ExpensesState extends State<Expenses> {
   }
 
   void _removeExpense(Expense expense) {
+    final expenseIndex = _registredExpense.indexOf(expense);
     setState(() {
       _registredExpense.remove(expense);
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text("Expense Deleted"),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            setState(() {
+              _registredExpense.insert(expenseIndex, expense);
+            });
+          },
+        ),
+      ),
+    );
   }
 
   void _openAddModalOverlay() {
@@ -63,7 +78,10 @@ class _ExpensesState extends State<Expenses> {
         IconButton(onPressed: _openAddModalOverlay, icon: const Icon(Icons.add))
       ]),
       body: Column(
-        children: [const Text('expense chart'), Expanded(child: mainContent)],
+        children: [
+          Chart(expenses: _registredExpense),
+          Expanded(child: mainContent)
+        ],
       ),
     );
   }
